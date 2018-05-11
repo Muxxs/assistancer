@@ -117,7 +117,7 @@ def email(title,content):
     subject = str(title)
     smtpserver = 'smtp.qq.com'
     username = '747306970@qq.com'
-    password = 'lqflqwijoscmbcag'
+    password = ''
     msg = MIMEText(content, 'html', 'utf-8')  # 中文需参数‘utf-8'，单字节字符不需要
     msg['From'] = sender
     msg['To'] = receiver

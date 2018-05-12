@@ -2,13 +2,21 @@
 import requests
 def tuisong(title,text):
     print("get "+title+"text:\n"+text)
+from langconv import *
 
+def Traditional2Simplified(sentence):
+    '''
+    将sentence中的繁体字转为简体字
+    :param sentence: 待转换的句子
+    :return: 将句子中繁体字转换为简体字之后的句子
+    '''
+    sentence = Converter('zh-hans').convert(sentence)
+    return sentence
 def weather():
     import requests
-    r = requests.get('http://www.weather.com.cn/data/sk/101010100.html')
+    r = requests.get('http://www.weather.com.cn/data/cityinfo/101010100.html')
     r.encoding = 'utf-8'
-    #print(r.json()["weatherinfo"])
-    return "温度："+r.json()['weatherinfo']['temp']+"\n风："+r.json()['weatherinfo']['WSE']+"级"+r.json()['weatherinfo']['WD']+"\n是否有雨："+r.json()['weatherinfo']['rain'].replace("0","无").replace("1","有")
+    return "温度："+r.json()["weatherinfo"]['temp1']+"~"+r.json()["weatherinfo"]['temp2']+"\n天气："+r.json()["weatherinfo"]['weather']
 
 def service(url):
     if url.find("http://")==-1:
@@ -24,6 +32,50 @@ def service(url):
     except:
         return "Warning:"+url+"服务器出现问题"
 
+def get_power():
+    import datetime
+    ti = datetime.datetime.now()
+    year=str(ti.year)
+    month=str(ti.month)
+    day=str(ti.day)
+    url="http://www.dailyenglishquote.com/"
+    req = requests.get(url)
+    req.encoding="utf-8"
+    res=[]
+    who=Traditional2Simplified(req.text.split('<div class="entry cf">')[1].split("<li>")[1].split("</li>")[0])
+    words=Traditional2Simplified(req.text.split('<div class="entry cf">')[1].split("<p>")[-1].split("</p>")[0].replace("&#8211;"," "))
+    res.append(words)
+    res.append(who)
+    return res
+
+def get_main(text):
+    # -*- coding: utf-8 -*-
+    import json
+    import requests
+
+    SUMMARY_URL = 'http://api.bosonnlp.com/summary/analysis'
+    # 注意：在测试时请更换为您的API Token
+    headers = {'X-Token': 'YOUR_API_TOKEN'}
+
+    source = {
+        'not_exceed': 0,
+        'percentage': 0.2,
+        'title': '',
+        'content': (text)
+    }
+
+    resp = requests.post(
+        SUMMARY_URL,
+        headers=headers,
+        data=json.dumps(source).encode('utf-8'))
+    resp.raise_for_status()
+
+    return(resp.text)
+
+def get_words():
+    final=""
+
+    return final
 #print(service("me.muxxs.com"))
 
 
@@ -62,6 +114,7 @@ def what():
     ser1=service("me.muxxs.com")
     ser2=service("www.muxxs.com")
     new=news()
+    word=get_power()
     html='''
 
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -77,13 +130,16 @@ def what():
 　　　
         <table align="center" border="1" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse;">
 　           <tr>
-　　      <td> [weather]</td>
+　　      <td> 北京天气：\n[weather]</td>
 　           </tr>
 　           <tr>
-　　      <td> [service1]\n [service2] </td>
+　　      <td> [service1] \n [service2] </td>
 　           </tr>
 　           <tr>
 　　      <td> [news] </td>
+　           </tr>
+            <tr>
+　　      <td> [words] \n ----[who]</td>
 　           </tr>
 </table>
 
@@ -98,10 +154,12 @@ def what():
 
 
     '''
-    html=html.replace("[todaytime]",str(ti)).replace("[weather]",wea).replace("[service1]",ser1).replace("[service2]",ser2).replace("[news]",new)
+    html=html.replace("[todaytime]",str(ti)).replace("[weather]",wea).replace("[service1]",ser1).replace("[service2]",ser2).replace("[news]",new).replace("[words]",word[0]).replace("[who]",word[1])
 
     print(html)
     email("每日报告",html)
+
+
 
 def email(title,content):
     #content="你好"
@@ -117,7 +175,7 @@ def email(title,content):
     subject = str(title)
     smtpserver = 'smtp.qq.com'
     username = '747306970@qq.com'
-    password = ''
+    password = 'lqflqwijoscmbcag'
     msg = MIMEText(content, 'html', 'utf-8')  # 中文需参数‘utf-8'，单字节字符不需要
     msg['From'] = sender
     msg['To'] = receiver
@@ -149,6 +207,7 @@ def doit():
         return what()
     except:
         tuisong("失败",str(ti)+"\n执行程序失败")
+what()
 import datetime,time
 print("working...")
 while True:
